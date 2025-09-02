@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Access Script</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow-x: hidden;
+      padding: 20px;
+    }
+    
+    body.reduced-motion {
+      animation: none !important;
+    }
+
+    body.reduced-motion *,
+    body.reduced-motion *::before,
+    body.reduced-motion *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+
+    .performance-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 8px 12px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(20px);
+      transition: all 0.3s ease;
+    }
+
+    .performance-toggle:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    .performance-toggle.active {
+      background: rgba(255, 193, 7, 0.2);
+      border-color: rgba(255, 193, 7, 0.4);
+      color: #ffc107;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="g" cx="50%" cy="50%" r="50%"><stop offset="0%" style="stop-color:rgba(255,255,255,0.1)"/><stop offset="100%" style="stop-color:rgba(255,255,255,0)"/></radialGradient></defs><circle cx="20" cy="20" r="2" fill="url(%23g)"/><circle cx="80" cy="40" r="1.5" fill="url(%23g)"/><circle cx="40" cy="80" r="1" fill="url(%23g)"/><circle cx="90" cy="20" r="1" fill="url(%23g)"/><circle cx="10" cy="90" r="1.5" fill="url(%23g)"/></svg>') repeat;
+      animation: float 20s ease-in-out infinite;
+      z-index: 0;
+    }
+
+    body.reduced-motion::before {
+      animation: none;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 450px;
+      margin: 0 auto;
+      perspective: 1000px;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(40px) saturate(180%);
+      -webkit-backdrop-filter: blur(40px) saturate(180%);
+      border-radius: 24px;
+      padding: 40px 32px;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+      text-align: center;
+      color: #fff;
+      transform-style: preserve-3d;
+      transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+      position: relative;
+      overflow: hidden;
+      
+      margin: 0 auto;
+    }
+
+    
+    body.reduced-motion .glass-card {
+      transform: none !important;
+      transition: none !important;
+    }
+
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.6s;
+    }
+
+    .glass-card:hover::before {
+      left: 100%;
+    }
+
+    body.reduced-motion .glass-card::before {
+      display: none;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-5px) rotateX(5deg);
+      box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    body.reduced-motion .glass-card:hover {
+      transform: none !important;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    }
+
+    .title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .subtitle {
+      font-size: 18px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 24px;
+      font-style: italic;
+    }
+
+    .description {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 32px;
+      line-height: 1.5;
+    }
+
+    .access-content {
+      margin-bottom: 32px;
+    }
+
+    .social-section {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 24px;
+      margin-top: 24px;
+    }
+
+    .social-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+.social-links {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .social-links {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .social-btn.github {
+    grid-column: span 2;
+    justify-content: center;
+  }
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  color: #fff;
+  backdrop-filter: blur(20px);
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.social-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.6s;
+  z-index: 0;
+}
+
+.social-btn:hover::before {
+  left: 100%;
+}
+
+.social-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.social-icon {
+  font-size: 22px;
+  min-width: 22px;
+  color: #fff;
+  z-index: 1;
+  transition: transform 0.3s ease, color 0.2s;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+.social-btn:hover .social-icon {
+  transform: scale(1.15);
+}
+
+.social-text {
+  font-size: 15px;
+  font-weight: 600;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+body.reduced-motion .social-btn::before {
+  display: none;
+}
+
+body.reduced-motion .social-btn:hover {
+  transform: none !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+body.reduced-motion .social-btn:hover .social-icon {
+  transform: none !important;
+}
+
+
+
+.social-btn.discord {
+  background: linear-gradient(135deg, rgba(88, 101, 242, 0.2), rgba(88, 101, 242, 0.1));
+  border-color: rgba(88, 101, 242, 0.3);
+}
+
+.social-btn.discord:hover {
+  background: linear-gradient(135deg, rgba(88, 101, 242, 0.3), rgba(88, 101, 242, 0.2));
+  box-shadow: 0 8px 24px rgba(88, 101, 242, 0.2);
+}
+
+body.reduced-motion .social-btn.discord:hover {
+  box-shadow: 0 4px 16px rgba(88, 101, 242, 0.15);
+}
+
+.social-btn.youtube {
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.2), rgba(255, 0, 0, 0.1));
+  border-color: rgba(255, 0, 0, 0.3);
+}
+
+.social-btn.youtube:hover {
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.3), rgba(255, 0, 0, 0.2));
+  box-shadow: 0 8px 24px rgba(255, 0, 0, 0.2);
+}
+
+body.reduced-motion .social-btn.youtube:hover {
+  box-shadow: 0 4px 16px rgba(255, 0, 0, 0.15);
+}
+
+.social-btn.github {
+  background: linear-gradient(135deg, rgba(36, 41, 46, 0.2), rgba(36, 41, 46, 0.1));
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.social-btn.github:hover {
+  background: linear-gradient(135deg, rgba(36, 41, 46, 0.3), rgba(36, 41, 46, 0.2));
+  box-shadow: 0 8px 24px rgba(36, 41, 46, 0.2);
+}
+
+body.reduced-motion .social-btn.github:hover {
+  box-shadow: 0 4px 16px rgba(36, 41, 46, 0.15);
+}
+
+.social-btn.telegram {
+  background: linear-gradient(135deg, rgba(0, 136, 204, 0.2), rgba(0, 136, 204, 0.1));
+  border-color: rgba(0, 136, 204, 0.3);
+}
+
+.social-btn.telegram:hover {
+  background: linear-gradient(135deg, rgba(0, 136, 204, 0.3), rgba(0, 136, 204, 0.2));
+  box-shadow: 0 8px 24px rgba(0, 136, 204, 0.2);
+}
+
+body.reduced-motion .social-btn.telegram:hover {
+  box-shadow: 0 4px 16px rgba(0, 136, 204, 0.15);
+}
+
+    
+.btn {
+  display: flex;
+  align-items: center; 
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px 0;
+  margin: 12px 0;
+  border-radius: 16px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+}
+
+    .btn.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .btn .btn-text {
+      transition: opacity 0.3s ease;
+    }
+
+    .btn.loading .btn-text {
+      opacity: 0;
+    }
+
+    .btn-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top: 2px solid #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .btn.loading .btn-spinner {
+      opacity: 1;
+    }
+
+    body.reduced-motion .btn-spinner {
+      animation: none;
+      border: none;
+    }
+
+    body.reduced-motion .btn.loading .btn-spinner {
+      opacity: 1;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.6s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    body.reduced-motion .btn::before {
+      display: none;
+    }
+
+    .btn-main {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-main:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+    }
+
+    body.reduced-motion .btn-main:hover {
+      transform: none !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-support {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+      color: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-support:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+    }
+
+    body.reduced-motion .btn-support:hover {
+      transform: none !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .note {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 24px;
+      font-style: italic;
+    }
+
+    .floating-elements {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .floating-element {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      animation: float-up 8s infinite linear;
+    }
+
+    body.reduced-motion .floating-element {
+      display: none;
+    }
+
+    @keyframes float-up {
+      0% {
+        transform: translateY(100vh) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-100px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    
+    @media (max-width: 480px) {
+      body {
+        padding: 15px;
+      }
+      
+      .container {
+        max-width: 100%;
+        width: 100%;
+      }
+      
+      .glass-card {
+        padding: 32px 24px;
+        border-radius: 20px;
+      }
+      
+      .title {
+        font-size: 24px;
+      }
+      
+      .social-links {
+        grid-template-columns: 1fr;
+      }
+      
+      .social-btn {
+        padding: 12px 16px;
+      }
+      
+
+      
+      .performance-toggle {
+        top: 15px;
+        right: 15px;
+        font-size: 11px;
+        padding: 6px 10px;
+      }
+    }
+
+
+    @media (min-height: 600px) {
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+
+    @media (max-height: 599px) {
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 60px;
+      }
+    }
+    
+    .social-btn.loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.social-btn.loading .btn-text {
+  opacity: 0;
+}
+
+.social-btn.loading .btn-spinner {
+  opacity: 1;
+}
+
+@media (min-width: 600px) {
+  .social-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .social-btn {
+    flex: 1 1 calc(50% - 6px);
+  }
+
+  .social-btn.github {
+    flex: 1 1 100%;
+  }
+}
+
+.social-btn.github {
+  justify-content: center;
+  text-align: center;
+}
+
+.social-btn.github .social-icon {
+  margin-right: 8px;
+}
+
+.lucide-icon {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.8;
+  flex-shrink: 0;
+}
+
+button[data-link] i {
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+    
+  </style>
+</head>
+<body>
+	
+	<noscript>
+  <style>
+    #main-content {
+      display: none;
+    }
+
+    body {
+      background: #0f0f0f;
+      color: #fff;
+      font-family: "Segoe UI", sans-serif;
+      text-align: center;
+      padding-top: 80px;
+      margin: 0;
+    }
+
+    .noscript-warning {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 40px 20px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .noscript-warning h1 {
+      font-size: 24px;
+      margin-bottom: 12px;
+    }
+
+    .noscript-warning p {
+      font-size: 16px;
+      opacity: 0.85;
+    }
+  </style>
+
+  <div class="noscript-warning">
+    <h1>⚠ JavaScript Required</h1>
+    <p>This site requires JavaScript to function properly.</p>
+    <p>Please enable JavaScript in your browser settings and reload the page.</p>
+  </div>
+</noscript>
+
+<div id="main-content">
+	
+  <div class="performance-toggle" onclick="togglePerformance()">
+    <i class="fas fa-tachometer-alt"></i> <span id="perfText">High Performance</span>
+  </div>
+  
+  <div class="floating-elements"></div>
+  
+  <div class="container">
+    <div class="glass-card">
+      <h1 class="title">Access the Script</h1>
+      <h2 class="subtitle">"STEAL COOKIES🍪"</h2>
+      <p class="description">Choose your preferred access method below to unlock the script instantly.</p>
+
+      <div class="access-content">
+<button class="btn btn-main" data-link="https://link-center.net/1370839/f6Txu5RrWakJ" data-link-type="main">
+  <span class="btn-text"><i data-lucide="link"></i> Main Link (Linkvertise)</span>
+  <div class="btn-spinner"></div>
+</button>
+
+<button class="btn btn-support" data-link="https://lootdest.org/s?mLRTnHVG" data-link-type="backup">
+  <span class="btn-text"><i data-lucide="link-2"></i> Backup Link (LootLabs)</span>
+  <div class="btn-spinner"></div>
+</button>
+
+<div class="social-section">
+  <div class="social-title">Follow for Updates & Support</div>
+  <div class="social-links">
+    <a class="social-btn discord" data-link="https://discord.gg/kymU65UvNb">
+      <i class="fab fa-discord social-icon"></i>
+      <span class="btn-text">Discord</span>
+      <div class="btn-spinner"></div>
+    </a>
+    <a class="social-btn youtube" data-link="https://youtube.com/@kyaanguyen">
+      <i class="fab fa-youtube social-icon"></i>
+      <span class="btn-text">YouTube</span>
+      <div class="btn-spinner"></div>
+    </a>
+    <a class="social-btn github" data-link="https://github.com/kyaarb">
+      <i class="fab fa-github social-icon"></i>
+      <span class="btn-text">GitHub</span>
+      <div class="btn-spinner"></div>
+    </a>
+  </div>
+</div>
+
+      <div class="note">Thanks for your support – Kyaa ✨</div>
+    </div>
+  </div>
+  </div>
+<script>
+  let isReducedMotion = false;
+
+  function detectMobile() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           window.innerWidth <= 768;
+  }
+
+  function togglePerformance() {
+    isReducedMotion = !isReducedMotion;
+    const body = document.body;
+    const perfText = document.getElementById('perfText');
+    const perfToggle = document.querySelector('.performance-toggle');
+
+    if (isReducedMotion) {
+      body.classList.add('reduced-motion');
+      perfText.textContent = 'Low Performance';
+      perfToggle.classList.add('active');
+      localStorage.setItem('reducedMotion', 'true');
+    } else {
+      body.classList.remove('reduced-motion');
+      perfText.textContent = 'High Performance';
+      perfToggle.classList.remove('active');
+      localStorage.setItem('reducedMotion', 'false');
+    }
+
+    body.style.display = 'none';
+    body.offsetHeight;
+    body.style.display = 'flex';
+  }
+
+  function initializePerformanceMode() {
+    const savedPreference = localStorage.getItem('reducedMotion');
+    const isMobile = detectMobile();
+
+    if (savedPreference === 'true' || (savedPreference === null && isMobile)) {
+      isReducedMotion = true;
+      document.body.classList.add('reduced-motion');
+      document.getElementById('perfText').textContent = 'Low Performance';
+      document.querySelector('.performance-toggle').classList.add('active');
+    }
+  }
+
+  function createFloatingElements() {
+    if (document.body.classList.contains('reduced-motion')) return;
+
+    const container = document.querySelector('.floating-elements');
+    container.innerHTML = '';
+
+    for (let i = 0; i < 15; i++) {
+      const element = document.createElement('div');
+      element.className = 'floating-element';
+      element.style.left = Math.random() * 100 + '%';
+      element.style.animationDelay = Math.random() * 8 + 's';
+      element.style.animationDuration = (Math.random() * 4 + 6) + 's';
+      container.appendChild(element);
+    }
+  }
+
+  function handleResize() {
+    const container = document.querySelector('.container');
+    if (container) container.style.margin = '0 auto';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initializePerformanceMode();
+    createFloatingElements();
+    window.addEventListener('resize', handleResize);
+    handleResize();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('.performance-toggle')) {
+      setTimeout(() => {
+        createFloatingElements();
+      }, 100);
+    }
+  });
+
+  document.querySelectorAll('.btn, .social-btn').forEach(button => {
+    button.addEventListener('click', function (e) {
+      e.preventDefault();
+      const link = button.getAttribute('data-link');
+      if (!link) return;
+      button.classList.add('loading');
+
+      setTimeout(() => {
+        window.open(link, '_blank');
+        button.classList.remove('loading');
+      }, 450);
+    });
+  });
+</script>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  window.addEventListener("DOMContentLoaded", () => {
+    lucide.createIcons();
+  });
+</script>
+
+</body>
+  </html>
